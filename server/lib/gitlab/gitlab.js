@@ -30,10 +30,7 @@ function Gitlab ( config, token ) {
 
 	// Setup request.
 	this.defaults = {
-		strictSSL: (typeof config.strictSSL !== 'undefined' ) ? config.strictSSL : true,
-		headers: {
-			'PRIVATE-TOKEN': 'UqvVA6dvJLjzonkyWk2B'
-		}
+		strictSSL: (typeof config.strictSSL !== 'undefined' ) ? config.strictSSL : true
 	};
 	this.request = request.defaults( this.defaults );
 
