@@ -5,62 +5,6 @@
  * Copyright (c) 2013 Sebastian Sebald
  * Licensed MIT <https://raw.github.com/sebald/scrumlab/master/LICENSE>
  */
-(function(window, angular, undefined) {
-'use strict';
-
-angular.module('sebald.gitlab', ['ng'])
-.provider('$gitlab', function () {
-
-	// Short hands.
-	var extend = angular.extend;
-
-	// Defaults.
-	var defaults = {
-		url: '',
-		api: 'api/v3/'
-	};
-
-	// Globals (set via $provider).
-	var globals = {};
-
-	// Set globals.
-	this.options = function ( value ) {
-		globals = value;
-	};
-
-
-	// Service
-	// -------------------------
-	this.$get = ['$http',
-	function ( $http ) {
-
-
-		// API: User + Session
-		// -------------------------
-		function User () {
-
-		}
-
-
-
-		// API class
-		// -------------------------
-		function Api ( opts ) {
-			var self = this,
-				options = extend( {}, defaults, globals, opts );
-
-		}
-
-		// The actual $gitlab service that is injected in controllers.
-		return {
-
-		};
-	}];
-
-});
-
-})(window, window.angular);
-
 /**
  * @license AngularJS v1.0.7
  * (c) 2010-2012 Google, Inc. http://angularjs.org
@@ -15363,5 +15307,61 @@ angular.module('ngResource', ['ng']).
     return ResourceFactory;
   }]);
 
+
+})(window, window.angular);
+
+(function(window, angular, undefined) {
+'use strict';
+
+angular.module('sebald.gitlab', ['ng'])
+.provider('$gitlab', function () {
+
+	// Short hands.
+	var extend = angular.extend;
+
+	// Defaults.
+	var defaults = {
+		url: '',
+		api: 'api/v3/'
+	};
+
+	// Globals (set via $provider).
+	var globals = {};
+
+	// Set globals.
+	this.options = function ( value ) {
+		globals = value;
+	};
+
+
+	// Service
+	// -------------------------
+	this.$get = ['$http',
+	function ( $http ) {
+
+
+		// API: User + Session
+		// -------------------------
+		function User () {
+
+		}
+
+
+
+		// API class
+		// -------------------------
+		function Api ( opts ) {
+			var self = this,
+				options = extend( {}, defaults, globals, opts );
+
+		}
+
+		// The actual $gitlab service that is injected in controllers.
+		return {
+
+		};
+	}];
+
+});
 
 })(window, window.angular);

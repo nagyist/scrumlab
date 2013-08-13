@@ -12,10 +12,6 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-karma');
 
 
-	// Print a timestamp (useful for when watching)
-	grunt.registerTask('timestamp', function() {
-		grunt.log.subhead(Date());
-	});
 
 	// Config
 	// -------------------------
@@ -136,7 +132,7 @@ module.exports = function (grunt) {
 
 		// SASS
 		sass: {
-			dev: {
+			build: {
 				files: {
 					'<%= dir.dist %>/<%= pkg.name %>.css': ['<%= dir.scss %>']
 				},
@@ -152,6 +148,16 @@ module.exports = function (grunt) {
 					style: 'compressed'
 				}
 			}
+		},
+
+
+		// Watch
+		// -------------------------
+		watch: {
+			build: {
+				files: [ 'src/**/*' ],
+				tasks: [ 'build', 'timestamp' ]
+			}
 		}
 
 	});
@@ -160,7 +166,13 @@ module.exports = function (grunt) {
 	// Tasks
 	// -------------------------
 	grunt.registerTask( 'default', ['build'] );
-	grunt.registerTask('build', ['clean', 'html2js', 'jshint', 'concat']);
+	grunt.registerTask('build', ['clean', 'html2js', 'jshint', 'concat', 'sass:build']);
 	grunt.registerTask('test', ['build', 'karma:unit']);
 
+	grunt.registerTask( 'work', ['watch:build'] );
+
+	// Print a timestamp (useful for when watching)
+	grunt.registerTask('timestamp', function() {
+		grunt.log.subhead(Date());
+	});
 };
