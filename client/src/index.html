@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" ng-app="scrumlab" ng-controller="MainCtrl">
+<html lang="en" ng-app="scrumlab" ng-controller="AppCtrl">
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-	<title>scrumlab  • Loading ...</title>
+	<title ng-bind="'scrumlab &bull; ' + title">scrumlab  &bull; Loading ...</title>
 
 	<link rel="stylesheet" type="text/css" href="<%= grunt.config.get('pkg.name') %>.css">
 </head>

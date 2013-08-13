@@ -1,4 +1,10 @@
 angular.module('scrumlab', [
+	'scrumlab.login',
+	'scrumlab.dashboard',
+
+	'templates.app',
+	'templates.components',
+
 	'session'
 ])
 
@@ -13,7 +19,11 @@ angular.module('scrumlab', [
 
 .run(['$location', '$rootScope', function ( $location, $rootScope ) {
 	$rootScope.$on('$routeChangeSuccess', function ( event, current, previous ) {
-		$rootScope.title = current.$route.title;
+		try {
+			$rootScope.title = current.$$route.title;
+		} catch (e) {
+			$rootScope.title = 'Loading...';
+		}
 	});
 }])
 
