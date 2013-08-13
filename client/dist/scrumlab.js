@@ -15313,55 +15313,865 @@ angular.module('ngResource', ['ng']).
 (function(window, angular, undefined) {
 'use strict';
 
-angular.module('sebald.gitlab', ['ng'])
-.provider('$gitlab', function () {
+angular.module('scrumlab', [
+	'scrumlab.login',
+	'scrumlab.dashboard',
 
-	// Short hands.
-	var extend = angular.extend;
+	'templates.app',
+	'templates.components',
 
-	// Defaults.
-	var defaults = {
-		url: '',
-		api: 'api/v3/'
+	'security'
+])
+
+
+.config(['$routeProvider', '$locationProvider',
+	function ( $routeProvider, $locationProvider ) {
+		$locationProvider.hashPrefix('!');
+		$routeProvider.otherwise( {redirectTo: '/404'} );
+	}
+])
+
+
+.run(['$location', '$rootScope', function ( $location, $rootScope ) {
+	$rootScope.$on('$routeChangeSuccess', function ( event, current, previous ) {
+		try {
+			$rootScope.title = current.$$route.title;
+		} catch (e) {
+			$rootScope.title = 'Loading...';
+		}
+	});
+}])
+
+.controller( 'AppCtrl', ['$scope', '$location',
+	function ( $scope, $location ) {
+
+}]);
+
+angular.module( 'scrumlab.dashboard', [
+	'security.authorization',
+	'gitlab.resource.project'
+])
+
+// Routes
+// -------------------------
+.config([ '$routeProvider', 'securityAuthorizationProvider', function ( $routeProvider, auth ) {
+	$routeProvider
+		.when( '/dashboard', {
+			title: 'Dashboard',
+			controller: 'DashboardCtrl',
+			templateUrl: 'dashboard/dashboard.tpl.html',
+			resolve: {
+				projects: function( $q, Project ) {
+					var d = $q.defer();
+					Project.query(function( projects ) {
+						d.resolve( projects );
+					});
+					return d.promise;
+				},
+				authenticatedUser: auth.requireAuthenticatedUser
+			}
+		});
+}])
+
+.controller( 'DashboardCtrl', [ '$scope', 'projects' , function ( $scope, projects ) {
+
+
+
+}]);
+
+angular.module( 'scrumlab.login', [] )
+
+// Routes
+// -------------------------
+.config([ '$routeProvider', function ( $routeProvider ) {
+	$routeProvider
+		.when( '/login', {
+			title: 'Login',
+			controller: 'LoginCtrl',
+			templateUrl: 'login/login.tpl.html'
+		});
+}])
+
+.controller( 'LoginCtrl', [ '$scope', function ( $scope ) {
+
+
+
+}]);
+
+// The `$dialogProvider` can be used to configure global defaults for your
+// `$dialog` service.
+var dialogModule = angular.module('ui.bootstrap.dialog', ['ui.bootstrap.transition']);
+
+dialogModule.controller('MessageBoxController', ['$scope', 'dialog', 'model', function($scope, dialog, model){
+  $scope.title = model.title;
+  $scope.message = model.message;
+  $scope.buttons = model.buttons;
+  $scope.close = function(res){
+    dialog.close(res);
+  };
+}]);
+
+dialogModule.provider("$dialog", function(){
+
+  // The default options for all dialogs.
+  var defaults = {
+    backdrop: true,
+    dialogClass: 'modal',
+    backdropClass: 'modal-backdrop',
+    transitionClass: 'fade',
+    triggerClass: 'in',
+    resolve:{},
+    backdropFade: false,
+    dialogFade:false,
+    keyboard: true, // close with esc key
+    backdropClick: true // only in conjunction with backdrop=true
+    /* other options: template, templateUrl, controller */
 	};
 
-	// Globals (set via $provider).
-	var globals = {};
+	var globalOptions = {};
 
-	// Set globals.
-	this.options = function ( value ) {
-		globals = value;
+  var activeBackdrops = {value : 0};
+
+  // The `options({})` allows global configuration of all dialogs in the application.
+  //
+  //      var app = angular.module('App', ['ui.bootstrap.dialog'], function($dialogProvider){
+  //        // don't close dialog when backdrop is clicked by default
+  //        $dialogProvider.options({backdropClick: false});
+  //      });
+	this.options = function(value){
+		globalOptions = value;
 	};
 
+  // Returns the actual `$dialog` service that is injected in controllers
+	this.$get = ["$http", "$document", "$compile", "$rootScope", "$controller", "$templateCache", "$q", "$transition", "$injector",
+  function ($http, $document, $compile, $rootScope, $controller, $templateCache, $q, $transition, $injector) {
 
-	// Service
-	// -------------------------
-	this.$get = ['$http',
-	function ( $http ) {
+		var body = $document.find('body');
 
-
-		// API: User + Session
-		// -------------------------
-		function User () {
-
+		function createElement(clazz) {
+			var el = angular.element("<div>");
+			el.addClass(clazz);
+			return el;
 		}
 
+    // The `Dialog` class represents a modal dialog. The dialog class can be invoked by providing an options object
+    // containing at lest template or templateUrl and controller:
+    //
+    //     var d = new Dialog({templateUrl: 'foo.html', controller: 'BarController'});
+    //
+    // Dialogs can also be created using templateUrl and controller as distinct arguments:
+    //
+    //     var d = new Dialog('path/to/dialog.html', MyDialogController);
+		function Dialog(opts) {
 
+      var self = this, options = this.options = angular.extend({}, defaults, globalOptions, opts);
+      this._open = false;
 
-		// API class
-		// -------------------------
-		function Api ( opts ) {
-			var self = this,
-				options = extend( {}, defaults, globals, opts );
+      this.backdropEl = createElement(options.backdropClass);
+      if(options.backdropFade){
+        this.backdropEl.addClass(options.transitionClass);
+        this.backdropEl.removeClass(options.triggerClass);
+      }
 
-		}
+      this.modalEl = createElement(options.dialogClass);
+      if(options.dialogFade){
+        this.modalEl.addClass(options.transitionClass);
+        this.modalEl.removeClass(options.triggerClass);
+      }
 
-		// The actual $gitlab service that is injected in controllers.
-		return {
+      this.handledEscapeKey = function(e) {
+        if (e.which === 27) {
+          self.close();
+          e.preventDefault();
+          self.$scope.$apply();
+        }
+      };
 
-		};
-	}];
+      this.handleBackDropClick = function(e) {
+        self.close();
+        e.preventDefault();
+        self.$scope.$apply();
+      };
+    }
 
+    // The `isOpen()` method returns wether the dialog is currently visible.
+    Dialog.prototype.isOpen = function(){
+      return this._open;
+    };
+
+    // The `open(templateUrl, controller)` method opens the dialog.
+    // Use the `templateUrl` and `controller` arguments if specifying them at dialog creation time is not desired.
+    Dialog.prototype.open = function(templateUrl, controller){
+      var self = this, options = this.options;
+
+      if(templateUrl){
+        options.templateUrl = templateUrl;
+      }
+      if(controller){
+        options.controller = controller;
+      }
+
+      if(!(options.template || options.templateUrl)) {
+        throw new Error('Dialog.open expected template or templateUrl, neither found. Use options or open method to specify them.');
+      }
+
+      this._loadResolves().then(function(locals) {
+        var $scope = locals.$scope = self.$scope = locals.$scope ? locals.$scope : $rootScope.$new();
+
+        self.modalEl.html(locals.$template);
+
+        if (self.options.controller) {
+          var ctrl = $controller(self.options.controller, locals);
+          self.modalEl.children().data('ngControllerController', ctrl);
+        }
+
+        $compile(self.modalEl)($scope);
+        self._addElementsToDom();
+
+        // trigger tranisitions
+        setTimeout(function(){
+          if(self.options.dialogFade){ self.modalEl.addClass(self.options.triggerClass); }
+          if(self.options.backdropFade){ self.backdropEl.addClass(self.options.triggerClass); }
+        });
+
+        self._bindEvents();
+      });
+
+      this.deferred = $q.defer();
+      return this.deferred.promise;
+    };
+
+    // closes the dialog and resolves the promise returned by the `open` method with the specified result.
+    Dialog.prototype.close = function(result){
+      var self = this;
+      var fadingElements = this._getFadingElements();
+
+      function removeTriggerClass(el){
+        el.removeClass(self.options.triggerClass);
+      }
+
+      function onCloseComplete(){
+        if(self._open){
+          self._onCloseComplete(result);
+        }
+      }
+
+      if(fadingElements.length > 0){
+        for (var i = fadingElements.length - 1; i >= 0; i--) {
+          $transition(fadingElements[i], removeTriggerClass).then(onCloseComplete);
+        }
+        return;
+      }
+      this._onCloseComplete(result);
+    };
+
+    Dialog.prototype._getFadingElements = function(){
+      var elements = [];
+      if(this.options.dialogFade){
+        elements.push(this.modalEl);
+      }
+      if(this.options.backdropFade){
+        elements.push(this.backdropEl);
+      }
+
+      return elements;
+    };
+
+    Dialog.prototype._bindEvents = function() {
+      if(this.options.keyboard){ body.bind('keydown', this.handledEscapeKey); }
+      if(this.options.backdrop && this.options.backdropClick){ this.backdropEl.bind('click', this.handleBackDropClick); }
+    };
+
+    Dialog.prototype._unbindEvents = function() {
+      if(this.options.keyboard){ body.unbind('keydown', this.handledEscapeKey); }
+      if(this.options.backdrop && this.options.backdropClick){ this.backdropEl.unbind('click', this.handleBackDropClick); }
+    };
+
+    Dialog.prototype._onCloseComplete = function(result) {
+      this._removeElementsFromDom();
+      this._unbindEvents();
+
+      this.deferred.resolve(result);
+    };
+
+    Dialog.prototype._addElementsToDom = function(){
+      body.append(this.modalEl);
+
+      if(this.options.backdrop) {
+        if (activeBackdrops.value === 0) {
+          body.append(this.backdropEl);
+        }
+        activeBackdrops.value++;
+      }
+
+      this._open = true;
+    };
+
+    Dialog.prototype._removeElementsFromDom = function(){
+      this.modalEl.remove();
+
+      if(this.options.backdrop) {
+        activeBackdrops.value--;
+        if (activeBackdrops.value === 0) {
+          this.backdropEl.remove();
+        }
+      }
+      this._open = false;
+    };
+
+    // Loads all `options.resolve` members to be used as locals for the controller associated with the dialog.
+    Dialog.prototype._loadResolves = function(){
+      var values = [], keys = [], templatePromise, self = this;
+
+      if (this.options.template) {
+        templatePromise = $q.when(this.options.template);
+      } else if (this.options.templateUrl) {
+        templatePromise = $http.get(this.options.templateUrl, {cache:$templateCache})
+        .then(function(response) { return response.data; });
+      }
+
+      angular.forEach(this.options.resolve || [], function(value, key) {
+        keys.push(key);
+        values.push(angular.isString(value) ? $injector.get(value) : $injector.invoke(value));
+      });
+
+      keys.push('$template');
+      values.push(templatePromise);
+
+      return $q.all(values).then(function(values) {
+        var locals = {};
+        angular.forEach(values, function(value, index) {
+          locals[keys[index]] = value;
+        });
+        locals.dialog = self;
+        return locals;
+      });
+    };
+
+    // The actual `$dialog` service that is injected in controllers.
+    return {
+      // Creates a new `Dialog` with the specified options.
+      dialog: function(opts){
+        return new Dialog(opts);
+      },
+      // creates a new `Dialog` tied to the default message box template and controller.
+      //
+      // Arguments `title` and `message` are rendered in the modal header and body sections respectively.
+      // The `buttons` array holds an object with the following members for each button to include in the
+      // modal footer section:
+      //
+      // * `result`: the result to pass to the `close` method of the dialog when the button is clicked
+      // * `label`: the label of the button
+      // * `cssClass`: additional css class(es) to apply to the button for styling
+      messageBox: function(title, message, buttons){
+        return new Dialog({templateUrl: 'template/dialog/message.html', controller: 'MessageBoxController', resolve:
+          {model: function() {
+            return {
+              title: title,
+              message: message,
+              buttons: buttons
+            };
+          }
+        }});
+      }
+    };
+  }];
 });
+
+angular.module('ui.bootstrap.transition', [])
+
+/**
+ * $transition service provides a consistent interface to trigger CSS 3 transitions and to be informed when they complete.
+ * @param  {DOMElement} element  The DOMElement that will be animated.
+ * @param  {string|object|function} trigger  The thing that will cause the transition to start:
+ *   - As a string, it represents the css class to be added to the element.
+ *   - As an object, it represents a hash of style attributes to be applied to the element.
+ *   - As a function, it represents a function to be called that will cause the transition to occur.
+ * @return {Promise}  A promise that is resolved when the transition finishes.
+ */
+.factory('$transition', ['$q', '$timeout', '$rootScope', function($q, $timeout, $rootScope) {
+
+  var $transition = function(element, trigger, options) {
+    options = options || {};
+    var deferred = $q.defer();
+    var endEventName = $transition[options.animation ? "animationEndEventName" : "transitionEndEventName"];
+
+    var transitionEndHandler = function(event) {
+      $rootScope.$apply(function() {
+        element.unbind(endEventName, transitionEndHandler);
+        deferred.resolve(element);
+      });
+    };
+
+    if (endEventName) {
+      element.bind(endEventName, transitionEndHandler);
+    }
+
+    // Wrap in a timeout to allow the browser time to update the DOM before the transition is to occur
+    $timeout(function() {
+      if ( angular.isString(trigger) ) {
+        element.addClass(trigger);
+      } else if ( angular.isFunction(trigger) ) {
+        trigger(element);
+      } else if ( angular.isObject(trigger) ) {
+        element.css(trigger);
+      }
+      //If browser does not support transitions, instantly resolve
+      if ( !endEventName ) {
+        deferred.resolve(element);
+      }
+    });
+
+    // Add our custom cancel function to the promise that is returned
+    // We can call this if we are about to run a new transition, which we know will prevent this transition from ending,
+    // i.e. it will therefore never raise a transitionEnd event for that transition
+    deferred.promise.cancel = function() {
+      if ( endEventName ) {
+        element.unbind(endEventName, transitionEndHandler);
+      }
+      deferred.reject('Transition cancelled');
+    };
+
+    return deferred.promise;
+  };
+
+  // Work out the name of the transitionEnd event
+  var transElement = document.createElement('trans');
+  var transitionEndEventNames = {
+    'WebkitTransition': 'webkitTransitionEnd',
+    'MozTransition': 'transitionend',
+    'OTransition': 'oTransitionEnd',
+    'transition': 'transitionend'
+  };
+  var animationEndEventNames = {
+    'WebkitTransition': 'webkitAnimationEnd',
+    'MozTransition': 'animationend',
+    'OTransition': 'oAnimationEnd',
+    'transition': 'animationend'
+  };
+  function findEndEventName(endEventNames) {
+    for (var name in endEventNames){
+      if (transElement.style[name] !== undefined) {
+        return endEventNames[name];
+      }
+    }
+  }
+  $transition.transitionEndEventName = findEndEventName(transitionEndEventNames);
+  $transition.animationEndEventName = findEndEventName(animationEndEventNames);
+  return $transition;
+}]);
+
+angular.module('gitlab.resource.project', ['ngResource'])
+.factory( 'Project', ['$resource', function ( $resource ) {
+	var Project = $resource('/api/projects/:id');
+	return Project;
+}]);
+
+angular.module('security.authorization', ['security.service'])
+
+// This service provides guard methods to support AngularJS routes.
+// You can add them as resolves to routes to require authorization levels
+// before allowing a route change to complete
+.provider('securityAuthorization', {
+
+  requireAdminUser: ['securityAuthorization', function(securityAuthorization) {
+    return securityAuthorization.requireAdminUser();
+  }],
+
+  requireAuthenticatedUser: ['securityAuthorization', function(securityAuthorization) {
+    return securityAuthorization.requireAuthenticatedUser();
+  }],
+
+  $get: ['security', 'securityRetryQueue', function(security, queue) {
+    var service = {
+
+      // Require that there is an authenticated user
+      // (use this in a route resolve to prevent non-authenticated users from entering that route)
+      requireAuthenticatedUser: function() {
+        var promise = security.requestCurrentUser().then(function(userInfo) {
+          if ( !security.isAuthenticated() ) {
+            return queue.pushRetryFn('unauthenticated-client', service.requireAuthenticatedUser);
+          }
+        });
+        return promise;
+      },
+
+      // Require that there is an administrator logged in
+      // (use this in a route resolve to prevent non-administrators from entering that route)
+      requireAdminUser: function() {
+        var promise = security.requestCurrentUser().then(function(userInfo) {
+          if ( !security.isAdmin() ) {
+            return queue.pushRetryFn('unauthorized-client', service.requireAdminUser);
+          }
+        });
+        return promise;
+      }
+
+    };
+
+    return service;
+  }]
+});
+// Based loosely around work by Witold Szczerba - https://github.com/witoldsz/angular-http-auth
+angular.module('security', [
+  'security.service',
+  'security.interceptor',
+  'security.login',
+  'security.authorization']);
+
+angular.module('security.interceptor', ['security.retryQueue'])
+
+// This http interceptor listens for authentication failures
+.factory('securityInterceptor', ['$injector', 'securityRetryQueue', function($injector, queue) {
+  return function(promise) {
+    // Intercept failed requests
+    return promise.then(null, function(originalResponse) {
+      if(originalResponse.status === 401) {
+        // The request bounced because it was not authorized - add a new request to the retry queue
+        promise = queue.pushRetryFn('unauthorized-server', function retryRequest() {
+          // We must use $injector to get the $http service to prevent circular dependency
+          return $injector.get('$http')(originalResponse.config);
+        });
+      }
+      return promise;
+    });
+  };
+}])
+
+// We have to add the interceptor to the queue as a string because the interceptor depends upon service instances that are not available in the config block.
+.config(['$httpProvider', function($httpProvider) {
+  $httpProvider.responseInterceptors.push('securityInterceptor');
+}]);
+angular.module('security.login.form', [])
+
+// The LoginFormController provides the behaviour behind a reusable form to allow users to authenticate.
+// This controller and its template (login/form.tpl.html) are used in a modal dialog box by the security service.
+.controller('LoginFormController', ['$scope', 'security', function($scope, security) {
+  // The model for this form
+  $scope.user = {};
+
+  // Any error message from failing to login
+  $scope.authError = null;
+
+  // The reason that we are being asked to login - for instance because we tried to access something to which we are not authorized
+  // We could do something diffent for each reason here but to keep it simple...
+  $scope.authReason = null;
+  if ( security.getLoginReason() ) {
+    $scope.authReason = ( security.isAuthenticated() ) ?
+      "You do not have the necessary access permissions.  Do you want to login as someone else?" :
+      "You must be logged in to access this part of the application.";
+  }
+
+  // Attempt to authenticate the user specified in the form's model
+  $scope.login = function() {
+    // Clear any previous security errors
+    $scope.authError = null;
+
+    // Try to login
+    security.login($scope.user.email, $scope.user.password).then(function(loggedIn) {
+      if ( !loggedIn ) {
+        // If we get here then the login failed due to bad credentials
+        $scope.authError = "Login failed.  Please check your credentials and try again.";
+      }
+    }, function(x) {
+      // If we get here then there was a problem with the login request to the server
+      $scope.authError = "There was a problem with authenticating: " + x + ".";
+    });
+  };
+
+  $scope.clearForm = function() {
+    $scope.user = {};
+  };
+
+  $scope.cancelLogin = function() {
+    security.cancelLogin();
+  };
+}]);
+
+angular.module('security.login', ['security.login.form', 'security.login.toolbar']);
+angular.module('security.login.toolbar', [])
+
+// The loginToolbar directive is a reusable widget that can show login or logout buttons
+// and information the current authenticated user
+.directive('loginToolbar', ['security', function(security) {
+  var directive = {
+    templateUrl: 'security/login/toolbar.tpl.html',
+    restrict: 'E',
+    replace: true,
+    scope: true,
+    link: function($scope, $element, $attrs, $controller) {
+      $scope.isAuthenticated = security.isAuthenticated;
+      $scope.login = security.showLogin;
+      $scope.logout = security.logout;
+      $scope.$watch(function() {
+        return security.currentUser;
+      }, function(currentUser) {
+        $scope.currentUser = currentUser;
+      });
+    }
+  };
+  return directive;
+}]);
+
+angular.module('security.retryQueue', [])
+
+// This is a generic retry queue for security failures.  Each item is expected to expose two functions: retry and cancel.
+.factory('securityRetryQueue', ['$q', '$log', function($q, $log) {
+  var retryQueue = [];
+  var service = {
+    // The security service puts its own handler in here!
+    onItemAddedCallbacks: [],
+
+    hasMore: function() {
+      return retryQueue.length > 0;
+    },
+    push: function(retryItem) {
+      retryQueue.push(retryItem);
+      // Call all the onItemAdded callbacks
+      angular.forEach(service.onItemAddedCallbacks, function(cb) {
+        try {
+          cb(retryItem);
+        } catch(e) {
+          $log.error('securityRetryQueue.push(retryItem): callback threw an error' + e);
+        }
+      });
+    },
+    pushRetryFn: function(reason, retryFn) {
+      // The reason parameter is optional
+      if ( arguments.length === 1) {
+        retryFn = reason;
+        reason = undefined;
+      }
+
+      // The deferred object that will be resolved or rejected by calling retry or cancel
+      var deferred = $q.defer();
+      var retryItem = {
+        reason: reason,
+        retry: function() {
+          // Wrap the result of the retryFn into a promise if it is not already
+          $q.when(retryFn()).then(function(value) {
+            // If it was successful then resolve our deferred
+            deferred.resolve(value);
+          }, function(value) {
+            // Othewise reject it
+            deferred.reject(value);
+          });
+        },
+        cancel: function() {
+          // Give up on retrying and reject our deferred
+          deferred.reject();
+        }
+      };
+      service.push(retryItem);
+      return deferred.promise;
+    },
+    retryReason: function() {
+      return service.hasMore() && retryQueue[0].reason;
+    },
+    cancelAll: function() {
+      while(service.hasMore()) {
+        retryQueue.shift().cancel();
+      }
+    },
+    retryAll: function() {
+      while(service.hasMore()) {
+        retryQueue.shift().retry();
+      }
+    }
+  };
+  return service;
+}]);
+
+// Based loosely around work by Witold Szczerba - https://github.com/witoldsz/angular-http-auth
+angular.module('security.service', [
+  'security.retryQueue',    // Keeps track of failed requests that need to be retried once the user logs in
+  'security.login',         // Contains the login form template and controller
+  'ui.bootstrap.dialog'     // Used to display the login form as a modal dialog.
+])
+
+.factory('security', ['$http', '$q', '$location', 'securityRetryQueue', '$dialog', function($http, $q, $location, queue, $dialog) {
+
+  // Redirect to the given url (defaults to '/')
+  function redirect(url) {
+    url = url || '/';
+    $location.path(url);
+  }
+
+  // Login form dialog stuff
+  var loginDialog = null;
+  function openLoginDialog() {
+    if ( loginDialog ) {
+      throw new Error('Trying to open a dialog that is already open!');
+    }
+    loginDialog = $dialog.dialog();
+    loginDialog.open('security/login/form.tpl.html', 'LoginFormController').then(onLoginDialogClose);
+  }
+  function closeLoginDialog(success) {
+    if (loginDialog) {
+      loginDialog.close(success);
+    }
+  }
+  function onLoginDialogClose(success) {
+    loginDialog = null;
+    if ( success ) {
+      queue.retryAll();
+    } else {
+      queue.cancelAll();
+      redirect();
+    }
+  }
+
+  // Register a handler for when an item is added to the retry queue
+  queue.onItemAddedCallbacks.push(function(retryItem) {
+    if ( queue.hasMore() ) {
+      service.showLogin();
+    }
+  });
+
+  // The public API of the service
+  var service = {
+
+    // Get the first reason for needing a login
+    getLoginReason: function() {
+      return queue.retryReason();
+    },
+
+    // Show the modal login dialog
+    showLogin: function() {
+      openLoginDialog();
+    },
+
+    // Attempt to authenticate a user by the given email and password
+    login: function(email, password) {
+      var request = $http.post('/api/login', {email: email, password: password});
+      return request.then(function(response) {
+        console.log(response);
+        service.currentUser = response.data;
+        if ( service.isAuthenticated() ) {
+          closeLoginDialog(true);
+        }
+      });
+    },
+
+    // Give up trying to login and clear the retry queue
+    cancelLogin: function() {
+      closeLoginDialog(false);
+      redirect();
+    },
+
+    // Logout the current user and redirect
+    logout: function(redirectTo) {
+      $http.post('/logout').then(function() {
+        service.currentUser = null;
+        redirect(redirectTo);
+      });
+    },
+
+    // Ask the backend to see if a user is already authenticated - this may be from a previous session.
+    requestCurrentUser: function() {
+      if ( service.isAuthenticated() ) {
+        return $q.when(service.currentUser);
+      } else {
+        return $http.get('/current-user').then(function(response) {
+          service.currentUser = response.data.user;
+          return service.currentUser;
+        });
+      }
+    },
+
+    // Information about the current user
+    currentUser: null,
+
+    // Is the current user authenticated?
+    isAuthenticated: function(){
+      return !!service.currentUser;
+    },
+
+    // Is the current user an adminstrator?
+    isAdmin: function() {
+      return !!(service.currentUser && service.currentUser.admin);
+    }
+  };
+
+  return service;
+}]);
+
+angular.module('templates.app', ['dashboard/dashboard.tpl.html', 'login/login.tpl.html']);
+
+angular.module("dashboard/dashboard.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("dashboard/dashboard.tpl.html",
+    "This is the dashboard.\n" +
+    "");
+}]);
+
+angular.module("login/login.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("login/login.tpl.html",
+    "You have to login!\n" +
+    "");
+}]);
+
+angular.module('templates.components', ['bootstrap/dialog/message.tpl.html', 'security/login/form.tpl.html', 'security/login/toolbar.tpl.html']);
+
+angular.module("bootstrap/dialog/message.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("bootstrap/dialog/message.tpl.html",
+    "<div class=\"modal-header\">\n" +
+    "	<h3>{{ title }}</h3>\n" +
+    "</div>\n" +
+    "<div class=\"modal-body\">\n" +
+    "	<p>{{ message }}</p>\n" +
+    "</div>\n" +
+    "<div class=\"modal-footer\">\n" +
+    "	<button ng-repeat=\"btn in buttons\" ng-click=\"close(btn.result)\" class=\"btn\" ng-class=\"btn.cssClass\">{{ btn.label }}</button>\n" +
+    "</div>\n" +
+    "");
+}]);
+
+angular.module("security/login/form.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("security/login/form.tpl.html",
+    "<form name=\"form\" novalidate class=\"login-form\">\n" +
+    "    <div class=\"modal-header\">\n" +
+    "        <h4>Sign in</h4>\n" +
+    "    </div>\n" +
+    "    <div class=\"modal-body\">\n" +
+    "        <div class=\"alert alert-warning\" ng-show=\"authReason\">\n" +
+    "            {{authReason}}\n" +
+    "        </div>\n" +
+    "        <div class=\"alert alert-error\" ng-show=\"authError\">\n" +
+    "            {{authError}}\n" +
+    "        </div>\n" +
+    "        <div class=\"alert alert-info\">Please enter your login details</div>\n" +
+    "        <label>E-mail</label>\n" +
+    "        <input name=\"login\" type=\"email\" ng-model=\"user.email\" required autofocus>\n" +
+    "        <label>Password</label>\n" +
+    "        <input name=\"pass\" type=\"password\" ng-model=\"user.password\" required>\n" +
+    "    </div>\n" +
+    "    <div class=\"modal-footer\">\n" +
+    "        <button class=\"btn btn-primary login\" ng-click=\"login()\" ng-disabled='form.$invalid'>Sign in</button>\n" +
+    "        <button class=\"btn clear\" ng-click=\"clearForm()\">Clear</button>\n" +
+    "        <button class=\"btn btn-warning cancel\" ng-click=\"cancelLogin()\">Cancel</button>\n" +
+    "    </div>\n" +
+    "</form>\n" +
+    "");
+}]);
+
+angular.module("security/login/toolbar.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("security/login/toolbar.tpl.html",
+    "<ul class=\"nav pull-right\">\n" +
+    "  <li class=\"divider-vertical\"></li>\n" +
+    "  <li ng-show=\"isAuthenticated()\">\n" +
+    "      <a href=\"#\">{{currentUser.firstName}} {{currentUser.lastName}}</a>\n" +
+    "  </li>\n" +
+    "  <li ng-show=\"isAuthenticated()\" class=\"logout\">\n" +
+    "      <form class=\"navbar-form\">\n" +
+    "          <button class=\"btn logout\" ng-click=\"logout()\">Log out</button>\n" +
+    "      </form>\n" +
+    "  </li>\n" +
+    "  <li ng-hide=\"isAuthenticated()\" class=\"login\">\n" +
+    "      <form class=\"navbar-form\">\n" +
+    "          <button class=\"btn login\" ng-click=\"login()\">Log in</button>\n" +
+    "      </form>\n" +
+    "  </li>\n" +
+    "</ul>");
+}]);
 
 })(window, window.angular);

@@ -59,9 +59,10 @@ angular.module('security.service', [
 
     // Attempt to authenticate a user by the given email and password
     login: function(email, password) {
-      var request = $http.post('/login', {email: email, password: password});
+      var request = $http.post('/api/login', {email: email, password: password});
       return request.then(function(response) {
-        service.currentUser = response.data.user;
+        console.log(response);
+        service.currentUser = response.data;
         if ( service.isAuthenticated() ) {
           closeLoginDialog(true);
         }
@@ -101,7 +102,7 @@ angular.module('security.service', [
     isAuthenticated: function(){
       return !!service.currentUser;
     },
-    
+
     // Is the current user an adminstrator?
     isAdmin: function() {
       return !!(service.currentUser && service.currentUser.admin);

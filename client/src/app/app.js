@@ -5,7 +5,7 @@ angular.module('scrumlab', [
 	'templates.app',
 	'templates.components',
 
-	'session'
+	'security'
 ])
 
 

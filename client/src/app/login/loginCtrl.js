@@ -4,7 +4,7 @@ angular.module( 'scrumlab.login', [] )
 // -------------------------
 .config([ '$routeProvider', function ( $routeProvider ) {
 	$routeProvider
-		.when( '/', {
+		.when( '/login', {
 			title: 'Login',
 			controller: 'LoginCtrl',
 			templateUrl: 'login/login.tpl.html'

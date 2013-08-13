@@ -1,17 +1,30 @@
-angular.module( 'scrumlab.dashboard', [] )
+angular.module( 'scrumlab.dashboard', [
+	'security.authorization',
+	'gitlab.resource.project'
+])
 
 // Routes
 // -------------------------
-.config([ '$routeProvider', function ( $routeProvider ) {
+.config([ '$routeProvider', 'securityAuthorizationProvider', function ( $routeProvider, auth ) {
 	$routeProvider
-		.when( '/', {
+		.when( '/dashboard', {
 			title: 'Dashboard',
 			controller: 'DashboardCtrl',
-			templateUrl: 'dashboard/dashboard.tpl.html'
+			templateUrl: 'dashboard/dashboard.tpl.html',
+			resolve: {
+				projects: function( $q, Project ) {
+					var d = $q.defer();
+					Project.query(function( projects ) {
+						d.resolve( projects );
+					});
+					return d.promise;
+				},
+				authenticatedUser: auth.requireAuthenticatedUser
+			}
 		});
 }])
 
-.controller( 'DashboardCtrl', [ '$scope', function ( $scope ) {
+.controller( 'DashboardCtrl', [ '$scope', 'projects' , function ( $scope, projects ) {
 
 
 

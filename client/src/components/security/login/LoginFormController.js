@@ -1,9 +1,9 @@
-angular.module('security.login.form', ['services.localizedMessages'])
+angular.module('security.login.form', [])
 
 // The LoginFormController provides the behaviour behind a reusable form to allow users to authenticate.
 // This controller and its template (login/form.tpl.html) are used in a modal dialog box by the security service.
-.controller('LoginFormController', ['$scope', 'security', 'localizedMessages', function($scope, security, localizedMessages) {
-  // The model for this form 
+.controller('LoginFormController', ['$scope', 'security', function($scope, security) {
+  // The model for this form
   $scope.user = {};
 
   // Any error message from failing to login
@@ -14,8 +14,8 @@ angular.module('security.login.form', ['services.localizedMessages'])
   $scope.authReason = null;
   if ( security.getLoginReason() ) {
     $scope.authReason = ( security.isAuthenticated() ) ?
-      localizedMessages.get('login.reason.notAuthorized') :
-      localizedMessages.get('login.reason.notAuthenticated');
+      "You do not have the necessary access permissions.  Do you want to login as someone else?" :
+      "You must be logged in to access this part of the application.";
   }
 
   // Attempt to authenticate the user specified in the form's model
@@ -27,11 +27,11 @@ angular.module('security.login.form', ['services.localizedMessages'])
     security.login($scope.user.email, $scope.user.password).then(function(loggedIn) {
       if ( !loggedIn ) {
         // If we get here then the login failed due to bad credentials
-        $scope.authError = localizedMessages.get('login.error.invalidCredentials');
+        $scope.authError = "Login failed.  Please check your credentials and try again.";
       }
     }, function(x) {
       // If we get here then there was a problem with the login request to the server
-      $scope.authError = localizedMessages.get('login.error.serverError', { exception: x });
+      $scope.authError = "There was a problem with authenticating: " + x + ".";
     });
   };
 

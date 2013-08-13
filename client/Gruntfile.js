@@ -70,7 +70,7 @@ module.exports = function (grunt) {
 			},
 			component: {
 				options: {
-					base: 'src/component'
+					base: 'src/components'
 				},
 				src: ['<%= dir.tpl.components %>'],
 				dest: '<%= dir.dist %>/templates/components.js',

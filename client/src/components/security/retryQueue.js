@@ -6,7 +6,7 @@ angular.module('security.retryQueue', [])
   var service = {
     // The security service puts its own handler in here!
     onItemAddedCallbacks: [],
-    
+
     hasMore: function() {
       return retryQueue.length > 0;
     },
