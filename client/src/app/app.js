@@ -1,50 +1,23 @@
-angular.module('sebald.gitlab', ['ng'])
-.provider('$gitlab', function () {
-
-	// Short hands.
-	var extend = angular.extend;
-
-	// Defaults.
-	var defaults = {
-		url: '',
-		api: 'api/v3/'
-	};
-
-	// Globals (set via $provider).
-	var globals = {};
-
-	// Set globals.
-	this.options = function ( value ) {
-		globals = value;
-	};
+angular.module('scrumlab', [
+	'session'
+])
 
 
-	// Service
-	// -------------------------
-	this.$get = ['$http',
-	function ( $http ) {
+.config(['$routeProvider', '$locationProvider',
+	function ( $routeProvider, $locationProvider ) {
+		$locationProvider.hashPrefix('!');
+		$routeProvider.otherwise( {redirectTo: '/404'} );
+	}
+])
 
 
-		// API: User + Session
-		// -------------------------
-		function User () {
+.run(['$location', '$rootScope', function ( $location, $rootScope ) {
+	$rootScope.$on('$routeChangeSuccess', function ( event, current, previous ) {
+		$rootScope.title = current.$route.title;
+	});
+}])
 
-		}
+.controller( 'AppCtrl', ['$scope', '$location',
+	function ( $scope, $location ) {
 
-
-
-		// API class
-		// -------------------------
-		function Api ( opts ) {
-			var self = this,
-				options = extend( {}, defaults, globals, opts );
-
-		}
-
-		// The actual $gitlab service that is injected in controllers.
-		return {
-
-		};
-	}];
-
-});
+}]);
