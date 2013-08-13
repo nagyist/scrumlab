@@ -1,0 +1,13 @@
+{
+  "name": "Scrumlab-Server",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "3.3.5",
+    "request": "~2.26.0",
+    "open": "0.0.3"
+  }
+}
