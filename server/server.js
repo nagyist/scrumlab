@@ -33,16 +33,21 @@ app.configure(function () {
 server.listen(config.server.listenPort, 'localhost', 511, function() {
 	console.log('Server started!')
 	// Once the server is listening we automatically open up a browser
-	// var open = require('open');
-	// open('http://localhost:' + config.server.listenPort + '/');
+	var open = require('open');
+	open('http://localhost:' + config.server.listenPort + '/');
 });
 
 // This route enables HTML5Mode by forwarding missing files to the index.html
 // app.all('/*', function(req, res) {
-// 	// Just send the index.html for other files to support HTML5Mode
-// 	res.sendfile('index.html', { root: config.server.distFolder });
+	// Just send the index.html for other files to support HTML5Mode
+	// console.log("REQUEST:" + req.path);
+	// res.sendfile('index.html', { root: config.server.distFolder });
 // });
 
+
+app.get('/*', function (req, res ) {
+	res.sendfile( req.path , { root: config.server.distFolder });
+});
 
 // Authentication
 // -------------------------
