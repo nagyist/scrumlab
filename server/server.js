@@ -55,8 +55,8 @@ app.post('/api/login', function ( req, res ) {
 // Projects
 // -------------------------
 app.get('/api/projects', function ( req, res ) {
-	gitlab.projects.all(function ( body ) {
-		res.send( body );
+	gitlab.projects.all(function ( status, body ) {
+		res.send( status, body );
 	});
 });
 

@@ -11,6 +11,13 @@ var express = require('express'),
 
 var	app = express();
 
+// Helper
+var handleGitlabStatus = function ( body ) {
+	// If an unautorized request is send to the Gitlab API it will just anaswer with a message:
+	// {"message":"401 Unauthorized"} insted of sending a 401.
+	return /401 Unauthorized/.test(body) ? 401 : 200;
+};
+
 
 // Gitlab module
 // -------------------------
@@ -41,7 +48,7 @@ function Gitlab ( config, token ) {
 		all: function ( callback ) {
 			self.request.get( self.base + '/projects',
 				function ( error, response, body ) {
-					callback( body );
+					callback( handleGitlabStatus(body), body );
 				}
 			);
 		}
