@@ -80,9 +80,6 @@ module.exports = function (grunt) {
 
 		// Concat
 		concat: {
-			options: {
-				banner: '<%= banner %>'
-			},
 			dist: {
 				src: [
 					'<%= dir.vendor %>',
@@ -90,7 +87,10 @@ module.exports = function (grunt) {
 					'<%= dir.src %>',
 					'<%= module.suffix %>'
 				],
-				dest: '<%= dir.dist %>/<%= pkg.name %>.js'
+				dest: '<%= dir.dist %>/<%= pkg.name %>.js',
+				options: {
+					banner: '<%= banner %>'
+				},
 			},
 			index: {
 				src: 'src/index.html',
