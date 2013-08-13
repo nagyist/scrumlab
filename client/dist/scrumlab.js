@@ -1,5 +1,5 @@
 /**
- * scrumlab - v0.0.0 - 2013-08-08
+ * scrumlab - v0.0.0 - 2013-08-13
  * https://github.com/sebald/scrumlab
  *
  * Copyright (c) 2013 Sebastian Sebald

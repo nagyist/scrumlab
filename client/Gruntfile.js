@@ -4,6 +4,7 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-contrib-jshint');
+	grunt.loadNpmTasks('grunt-contrib-sass');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-bump');
@@ -35,6 +36,7 @@ module.exports = function (grunt) {
 			dist: 'dist',
 			src: 'src/**/*.js',
 			spec: 'test/**/*.spec.js',
+			scss: 'src/scss/main.scss',
 			tpl: {
 				src: 'src/app/**/*.tpl.html',
 				components: 'src/components/**/*.tpl.html'
@@ -87,12 +89,19 @@ module.exports = function (grunt) {
 			},
 			dist: {
 				src: [
+					'<%= dir.vendor %>',
 					'<%= module.prefix %>',
 					'<%= dir.src %>',
-					'<%= module.suffix %>',
-					'<%= dir.vendor %>'
+					'<%= module.suffix %>'
 				],
-				dest:'<%= dir.dist %>/<%= pkg.name %>.js'
+				dest: '<%= dir.dist %>/<%= pkg.name %>.js'
+			},
+			index: {
+				src: 'src/index.html',
+				dest: '<%= dir.dist %>/index.html',
+				options: {
+					process: true
+				}
 			}
 		},
 
@@ -123,7 +132,28 @@ module.exports = function (grunt) {
 				smarttabs:true,
 				globals:{}
 			}
+		},
+
+		// SASS
+		sass: {
+			dev: {
+				files: {
+					'<%= dir.dist %>/<%= pkg.name %>.css': ['<%= dir.scss %>']
+				},
+				options: {
+					lineNumbers: true
+				}
+			},
+			min: {
+				files: {
+					'<%= dir.dist %>/<%= pkg.name %>.css': ['<%= dir.scss %>']
+				},
+				options: {
+					style: 'compressed'
+				}
+			}
 		}
+
 	});
 
 

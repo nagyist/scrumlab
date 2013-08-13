@@ -18,8 +18,8 @@ app.configure(function () {
 	app.use(express.logger());
 	app.use(express.bodyParser());
 
-	app.use(express.cookieParser());
-	app.use(express.session({ secret: config.server.secret }));
+	app.use(express.cookieParser(config.server.secret));
+	app.use(express.session());
 	app.use(app.router);
 	app.use(express.logger());
 
@@ -43,15 +43,15 @@ server.listen(config.server.listenPort, 'localhost', 511, function() {
 // 	res.sendfile('index.html', { root: config.server.distFolder });
 // });
 
+
 // Authentication
 // -------------------------
-
 app.post('/api/login', function ( req, res ) {
 	console.log(req.session);
 
 	gitlab.login(req.body.email, req.body.password, function ( body ) {
 		if( body.username ) {
-			req.session.username = body.username;
+			req.session.user = body.username;
 		}
 
 		res.send( body );
