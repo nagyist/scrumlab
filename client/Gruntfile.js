@@ -85,6 +85,7 @@ module.exports = function (grunt) {
 					'<%= dir.vendor %>',
 					'<%= module.prefix %>',
 					'<%= dir.src %>',
+					'<%= dir.dist %>/templates/*.js',
 					'<%= module.suffix %>'
 				],
 				dest: '<%= dir.dist %>/<%= pkg.name %>.js',
