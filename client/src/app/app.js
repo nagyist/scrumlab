@@ -1,4 +1,6 @@
 angular.module('scrumlab', [
+	'ngRoute',
+
 	'scrumlab.login',
 	'scrumlab.dashboard',
 

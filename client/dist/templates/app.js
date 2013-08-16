@@ -3,6 +3,7 @@ angular.module('templates.app', ['dashboard/dashboard.tpl.html', 'login/login.tp
 angular.module("dashboard/dashboard.tpl.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("dashboard/dashboard.tpl.html",
     "This is the dashboard.\n" +
+    "<a ng-href=\"#!/dashboard\">Dashboard</a>\n" +
     "");
 }]);
 

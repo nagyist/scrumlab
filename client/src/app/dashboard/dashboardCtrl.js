@@ -1,11 +1,8 @@
-angular.module( 'scrumlab.dashboard', [
-	'security.authorization',
-	'gitlab.resource.project'
-])
+angular.module( 'scrumlab.dashboard', [])
 
 // Routes
 // -------------------------
-.config([ '$routeProvider', 'securityAuthorizationProvider', function ( $routeProvider, auth ) {
+.config([ '$routeProvider',  function ( $routeProvider ) {
 	$routeProvider
 		.when( '/dashboard', {
 			title: 'Dashboard',

@@ -39,6 +39,7 @@ module.exports = function (grunt) {
 			},
 			vendor: [
 				'vendor/angular/angular.js',
+				'vendor/angular-route/angular-route.js',
 				'vendor/angular-resource/angular-resource.js'
 			]
 		},
