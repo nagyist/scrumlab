@@ -48,8 +48,7 @@ server.listen(config.server.listenPort, 'localhost', 511, function() {
 // Authentication
 // -------------------------
 app.post('/api/login', function ( req, res ) {
-	console.log('login');
-	gitlab.login(req.body.email, req.body.password, function ( body ) {
+	gitlab.login(req.body.email, req.body.password, function ( status, body ) {
 		if( body.username ) {
 			req.session.user = { 'name': body.username, 'id': body.id };
 		}
@@ -57,7 +56,7 @@ app.post('/api/login', function ( req, res ) {
 			sessions[body.id] = body.private_token;
 			delete body.private_token;
 		}
-		res.send( body );
+		res.send( status, body );
 	});
 });
 

@@ -318,8 +318,11 @@ Gitlab.prototype.login = function ( email, pwd, callback ) {
 			qs: { email: email, password: pwd }
 		},
 		function ( error, response, body ) {
+			// Gitlab returns with a 200 when a login attempt failes.
+			// So we check for this and return a forbidden instead.
+			var status = /401 Unauthorized/.test(body) ? 403 : 200;
 			body = JSON.parse(body);
-			callback( body );
+			callback( status, body );
 		}
 	);
 };
