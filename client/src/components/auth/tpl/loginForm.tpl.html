@@ -1,0 +1,5 @@
+<form name="loginForm" class="login-container" ng-controller="authFormCtrl as auth">
+	<input name="email" type="email" ng-model="auth.email" required>
+	<input name="password" type="password" ng-model="auth.password" required>
+	<button ng-click="auth.login()" ng-disabled="loginForm.$invalid">Login</button>
+</form>

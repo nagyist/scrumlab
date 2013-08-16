@@ -13,6 +13,4 @@ angular.module( 'scrumlab.login', [] )
 
 .controller( 'LoginCtrl', [ '$scope', function ( $scope ) {
 
-
-
 }]);
