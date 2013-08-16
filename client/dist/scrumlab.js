@@ -19323,6 +19323,8 @@ angular.module('ngResource', ['ng']).
 angular.module('scrumlab', [
 	'ngRoute',
 
+	'auth',
+
 	'scrumlab.login',
 	'scrumlab.dashboard',
 
@@ -19354,7 +19356,9 @@ angular.module('scrumlab', [
 
 }]);
 
-angular.module( 'scrumlab.dashboard', [])
+angular.module( 'scrumlab.dashboard', [
+	'scrumlab.resouce.project'
+])
 
 // Routes
 // -------------------------
@@ -19365,7 +19369,9 @@ angular.module( 'scrumlab.dashboard', [])
 			controller: 'DashboardCtrl',
 			templateUrl: 'dashboard/dashboard.tpl.html',
 			resolve: {
-
+				projects: function ( Project ) {
+					return Project.query().$promise;
+				}
 			}
 		})
 		.when( '/', {
@@ -19396,6 +19402,42 @@ angular.module( 'scrumlab.login', [] )
 
 
 
+}]);
+
+// Based on the work by Witold Szczerba (https://github.com/witoldsz/angular-http-auth)
+angular.module('auth', [
+	'auth.interceptor'
+]);
+
+angular.module('auth.interceptor', [])
+
+// Service to intercept authentication failures.
+// If an authentiation failure occurs it will store the request in an queue
+// and redirect the user to the login page.
+.factory( 'authInterceptor', [ '$location', function ( $location ) {
+	return function ( promise ) {
+		// Intercept failed requests.
+		return promise.then( null, function ( response ) {
+			if( response.status === 401 ) {
+				// TODO: add retry queue.
+				// Redirect to login page.
+				$location.path('/login');
+			}
+			// Otherwise, ignore it.
+			return promise;
+		});
+	};
+}])
+
+// Add the authInterceptor to Angular's response interceptors.
+.config(['$httpProvider', function ( $httpProvider ) {
+	$httpProvider.responseInterceptors.push( 'authInterceptor' );
+}]);
+
+angular.module('scrumlab.resouce.project', ['ngResource'])
+.factory( 'Project', [ '$resource', function ( $resource ) {
+	var Project = $resource('/api/projects/:id', { id: '@id' });
+	return Project;
 }]);
 
 angular.module('templates.app', ['dashboard/dashboard.tpl.html', 'login/login.tpl.html']);

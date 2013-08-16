@@ -1,4 +1,6 @@
-angular.module( 'scrumlab.dashboard', [])
+angular.module( 'scrumlab.dashboard', [
+	'scrumlab.resouce.project'
+])
 
 // Routes
 // -------------------------
@@ -9,7 +11,9 @@ angular.module( 'scrumlab.dashboard', [])
 			controller: 'DashboardCtrl',
 			templateUrl: 'dashboard/dashboard.tpl.html',
 			resolve: {
-
+				projects: function ( Project ) {
+					return Project.query().$promise;
+				}
 			}
 		})
 		.when( '/', {
