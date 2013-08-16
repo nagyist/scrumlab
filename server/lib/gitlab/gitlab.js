@@ -15,6 +15,7 @@ var	app = express();
 function isString(value){return typeof value == 'string';}
 function isObject(value){return value != null && typeof value == 'object';}
 function isFunction(value){return typeof value == 'function';}
+function isArray(value) { return toString.apply(value) == '[object Array]';}
 
 // Gitlab module
 // -------------------------
@@ -140,9 +141,10 @@ function Gitlab ( config, token ) {
 		);
 	};
 
+
 	// Users
 	// -------------------------
-	this.projects = {
+	this.users = {
 		all: function ( token, callback ) {
 			self.req( '/users', token, callback );
 		},
@@ -150,6 +152,7 @@ function Gitlab ( config, token ) {
 			self.req( '/users/' + id, token, callback );
 		}
 	};
+
 
 	// Projects
 	// -------------------------
@@ -160,11 +163,148 @@ function Gitlab ( config, token ) {
 		get: function ( id, token, callback ) {
 			self.req( '/projects/' + id, token, callback );
 		},
-		events: function ( id, token, callback ) {
-			self.req( '/projects/' + id + '/events', token, callback )
+
+		// Events.
+		events: function ( pid, token, callback ) {
+			self.req( '/projects/' + pid + '/events', token, callback );
+		},
+
+		// Merge Requests.
+		mergeRequests: {
+			all: function ( pid, token, callback ) {
+				self.req( '/projects/' + pid + '/merge_requests', token, callback );
+			},
+			get: function ( pid, mid, token, callback ) {
+				self.req( '/projects/' + pid + '/merge_requests/' + mid, token, callback );
+			}
+		},
+
+		// Issues.
+		issues: {
+			all: function ( pid, token, callback ) {
+				self.req( '/projects/' + pid + '/issues', token, callback );
+			},
+			get: function ( pid, iid, token, callback ) {
+				self.req( '/projects/' + pid + '/issues/' + iid, token, callback );
+			},
+			create: function ( pid, title, description, assigned, milestone, labels, token, callback ) {
+				if( !pid ) {
+					throw "The project ID is required to create a new issue."
+				}
+				var qs = {
+					id: pid,
+					title: title,
+					description: description,
+					assignee_id: assigned,
+					milestone_id: milestone,
+					labels: isArray(labels) ? labels.join(',') : labels
+				};
+				self.req( 'post', '/projects/' + pid + '/issues', qs, token, callback);
+			},
+			edit: function ( pid, iid, title, description, assigned, milestone, labels, token, callback ) {
+				if( !(pid && iid) ) {
+					throw "The project ID and issue ID are required to edit an issue."
+				}
+				var qs = {
+					id: pid,
+					issue_id: iid,
+					title: title,
+					description: description,
+					assignee_id: assigned,
+					milestone_id: milestone,
+					labels: isArray(labels) ? labels.join(',') : labels
+				};
+				self.req( 'put', '/projects/' + pid + '/issues/' + iid, qs, token, callback);
+			},
+			close: function ( pid, iid, token, callback ) {
+				if( !(pid && iid) ) {
+					throw "The project ID and issue ID are required to close an issue."
+				}
+				var qs = {
+					id: pid,
+					issue_id: iid,
+					state_event: 'close'
+				};
+				self.req( 'put', '/projects/' + pid + '/issues/' + iid, qs, token, callback);
+			},
+			reopen: function ( pid, iid, token, callback ) {
+				if( !(pid && iid) ) {
+					throw "The project ID and issue ID are required to reopen an issue."
+				}
+				var qs = {
+					id: pid,
+					issue_id: iid,
+					state_event: 'reopen'
+				};
+				self.req( 'put', '/projects/' + pid + '/issues/' + iid, qs, token, callback);
+			}
+		},
+
+		// Merge Requests.
+		milestones: {
+			all: function ( pid, token, callback ) {
+				self.req( '/projects/' + pid + '/milestones', token, callback );
+			},
+			get: function ( pid, mid, token, callback ) {
+				self.req( '/projects/' + pid + '/milestones/' + mid, token, callback );
+			},
+			create: function ( pid, title, description, due, token, callback ) {
+				if( !(pid && title) ){
+					throw "The project ID and a title are required to create a new milestone."
+				}
+				var qs = {
+					id: pid,
+					title: title,
+					description: description,
+					due_date: due
+				};
+				self.req( 'post', '/projects/' + pid + '/milestones', qs, token, callback );
+			},
+			edit: function ( pid, mid, title, description, due, token, callback ) {
+				if( !(pid && mid) ){
+					throw "The project ID and milestone ID are required to edit a milestone."
+				}
+				var qs = {
+					id: pid,
+					milestone_id: mid,
+					title: title,
+					description: description,
+					due_date: due
+				};
+				self.req( 'put', '/projects/' + pid + '/milestones/' + mid, qs, token, callback );
+			},
+			close: function ( pid, mid, token, callback ) {
+				if( !(pid && title) ){
+					throw "The project ID and a title are required to close a milestone."
+				}
+				var qs = {
+					id: pid,
+					milestone_id: mid,
+					state_event: 'close'
+				};
+				self.req( 'put', '/projects/' + pid + '/milestones/' + mid, qs, token, callback );
+			},
+			reopen: function ( pid, mid, token, callback ) {
+				if( !(pid && title) ){
+					throw "The project ID and a title are required to reopen a milestone."
+				}
+				var qs = {
+					id: pid,
+					milestone_id: mid,
+					state_event: 'reopen'
+				};
+				self.req( 'put', '/projects/' + pid + '/milestones/' + mid, qs, token, callback );
+			}
 		}
 	};
 
+	// Issues
+	// -------------------------
+	this.issues = {
+		all: function ( token, callback ) {
+			self.req( '/issues', token, callback );
+		}
+	};
 }
 
 
@@ -172,7 +312,6 @@ function Gitlab ( config, token ) {
 // -------------------------
 Gitlab.prototype.login = function ( email, pwd, callback ) {
 	var self = this;
-
 	this.request.post(
 		{
 			url: self.base + '/session',
