@@ -19400,26 +19400,48 @@ angular.module( 'scrumlab.login', [] )
 
 .controller( 'LoginCtrl', [ '$scope', function ( $scope ) {
 
+}]);
 
+angular.module('auth.form.ctrl', [])
+.controller('authFormCtrl', [ '$http', function ( $http ) {
+	this.login = function () {
+		console.log('login started');
+		var request = $http.post('/api/login', {email: this.email, password: this.password},
 
+			function success ( response ) {
+				console.log(response);
+			},
+
+			function error ( response ) {
+				console.log(response);
+			}
+		);
+
+		request.then( function ( response ) {
+			console.log(response);
+		});
+	};
 }]);
 
 // Based on the work by Witold Szczerba (https://github.com/witoldsz/angular-http-auth)
 angular.module('auth', [
-	'auth.interceptor'
+	'auth.interceptor',
+	'auth.retryQueue',
+	'auth.form.ctrl'
 ]);
 
-angular.module('auth.interceptor', [])
+angular.module('auth.interceptor', ['auth.retryQueue'])
 
 // Service to intercept authentication failures.
 // If an authentiation failure occurs it will store the request in an queue
 // and redirect the user to the login page.
-.factory( 'authInterceptor', [ '$location', function ( $location ) {
+.factory( 'authInterceptor', [ '$q', '$location', 'authRetryQueue', function ( $q, $location, queue ) {
 	return function ( promise ) {
 		// Intercept failed requests.
 		return promise.then( null, function ( response ) {
 			if( response.status === 401 ) {
-				// TODO: add retry queue.
+				var deferred = $q.defer();
+				queue.push( response.config, deferred );
 				// Redirect to login page.
 				$location.path('/login');
 			}
@@ -19432,6 +19454,89 @@ angular.module('auth.interceptor', [])
 // Add the authInterceptor to Angular's response interceptors.
 .config(['$httpProvider', function ( $httpProvider ) {
 	$httpProvider.responseInterceptors.push( 'authInterceptor' );
+}]);
+
+angular.module('auth.retryQueue', [])
+.factory('authRetryQueue', [ '$injector', function ( $injector ) {
+	// Store all requests for later execution.
+	var queue = [],
+		$http;
+
+	// Retry a HTTP request.
+	var retry = function ( request ) {
+		// Init server to circumvent circular dependency.
+		$http = $http || injector.get('$http');
+		$http(request.config).then(
+
+			function success( response ) {
+				request.deferred.resolve(reponse);
+			},
+
+			function error ( reponse ) {
+				request.deferred.reject(reponse);
+			}
+		);
+	};
+
+	var service = {
+		isEmpty: function () {
+			return queue.length === 0;
+		},
+
+		// Push a new HTTP request to the queue.
+		push: function ( config, deferred ) {
+			queue.push({ config: config, deferred: deferred });
+		},
+
+		// Retry all HTTP requests from queue.
+		retryAll: function () {
+			while( !service.isEmpty() ) {
+				retry(queue.shift());
+			}
+		}
+	};
+	return service;
+}]);
+
+angular.module('auth.session', [])
+.service('$session', [ '$http', function ( $http ) {
+	// Store current user.
+	var user;
+
+	var session = {
+
+		// Login/ -out
+		// -------------------------
+		login: function ( u ) {
+			user = u;
+		},
+		logout: function () {
+			user = undefined;
+		},
+		// This will ask the backend if we are curently authenticated,
+		// mabye from a previous visit.
+		current: function () {
+			return $http.get('/api/session').then( function ( response ) {
+				session.login( reponse.data );
+				return session.user();
+			});
+		},
+
+		// User
+		// -------------------------
+		user: function () {
+			return user || {};
+		},
+
+
+		// Helper functions
+		// -------------------------
+		isAuthenticated: function () {
+			return !!user;
+		}
+
+	};
+	return session;
 }]);
 
 angular.module('scrumlab.resouce.project', ['ngResource'])
@@ -19451,11 +19556,23 @@ angular.module("dashboard/dashboard.tpl.html", []).run(["$templateCache", functi
 
 angular.module("login/login.tpl.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("login/login.tpl.html",
-    "You have to login!\n" +
+    "This is the login page.\n" +
+    "\n" +
+    "<div ng-include=\"'auth/tpl/loginForm.tpl.html'\"></div>\n" +
+    "\n" +
     "");
 }]);
 
-angular.module('templates.components', []);
+angular.module('templates.components', ['auth/tpl/loginForm.tpl.html']);
 
+angular.module("auth/tpl/loginForm.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("auth/tpl/loginForm.tpl.html",
+    "<form name=\"loginForm\" class=\"login-container\" ng-controller=\"authFormCtrl as auth\">\n" +
+    "	<input name=\"email\" type=\"email\" ng-model=\"auth.email\" required>\n" +
+    "	<input name=\"password\" type=\"password\" ng-model=\"auth.password\" required>\n" +
+    "	<button ng-click=\"auth.login()\" ng-disabled=\"loginForm.$invalid\">Login</button>\n" +
+    "</form>\n" +
+    "");
+}]);
 
 })(window, window.angular);

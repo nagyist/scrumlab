@@ -9,6 +9,9 @@ angular.module("dashboard/dashboard.tpl.html", []).run(["$templateCache", functi
 
 angular.module("login/login.tpl.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("login/login.tpl.html",
-    "You have to login!\n" +
+    "This is the login page.\n" +
+    "\n" +
+    "<div ng-include=\"'auth/tpl/loginForm.tpl.html'\"></div>\n" +
+    "\n" +
     "");
 }]);
