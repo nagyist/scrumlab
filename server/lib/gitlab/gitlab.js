@@ -90,6 +90,7 @@ function Gitlab ( config, token ) {
 				// No qs (a2 => token or callback)
 				if ( isString(a2) ) {
 					token = a2;
+					qs = {};
 				} else {
 					qs = a2;
 				}
@@ -120,7 +121,7 @@ function Gitlab ( config, token ) {
 				'Request to Gitlab will most likely fail.');
 		}
 
-		// Make request.
+		// Make the request.
 		this.request[method.toLowerCase()]({
 				url: self.base + path,
 				headers: {
@@ -128,9 +129,26 @@ function Gitlab ( config, token ) {
 				}
 			},
 			function ( error, response, body ) {
-				callback( handleGitlabStatus(body), body );
+				var b;
+				try {
+					b = JSON.parse(body);
+				} catch (e) {
+					b = body;
+				}
+				callback( handleGitlabStatus(body), b );
 			}
 		);
+	};
+
+	// Users
+	// -------------------------
+	this.projects = {
+		all: function ( token, callback ) {
+			self.req( '/users', token, callback );
+		},
+		get: function ( id, token, callback ) {
+			self.req( '/users/' + id, token, callback );
+		}
 	};
 
 	// Projects
@@ -138,8 +156,15 @@ function Gitlab ( config, token ) {
 	this.projects = {
 		all: function ( token, callback ) {
 			self.req( '/projects', token, callback );
+		},
+		get: function ( id, token, callback ) {
+			self.req( '/projects/' + id, token, callback );
+		},
+		events: function ( id, token, callback ) {
+			self.req( '/projects/' + id + '/events', token, callback )
 		}
 	};
+
 }
 
 
