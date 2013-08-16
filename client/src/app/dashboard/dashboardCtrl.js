@@ -9,18 +9,15 @@ angular.module( 'scrumlab.dashboard', [])
 			controller: 'DashboardCtrl',
 			templateUrl: 'dashboard/dashboard.tpl.html',
 			resolve: {
-				projects: function( $q, Project ) {
-					var d = $q.defer();
-					Project.query(function( projects ) {
-						d.resolve( projects );
-					});
-					return d.promise;
-				}
+
 			}
+		})
+		.when( '/', {
+			redirectTo: '/dashboard'
 		});
 }])
 
-.controller( 'DashboardCtrl', [ '$scope', 'projects' , function ( $scope, projects ) {
+.controller( 'DashboardCtrl', [ '$scope', function ( $scope ) {
 
 
 
