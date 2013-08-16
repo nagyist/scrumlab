@@ -3,9 +3,7 @@ angular.module('scrumlab', [
 	'scrumlab.dashboard',
 
 	'templates.app',
-	'templates.components',
-
-	'security'
+	'templates.components'
 ])
 
 

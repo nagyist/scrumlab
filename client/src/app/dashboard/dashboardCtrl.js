@@ -18,8 +18,7 @@ angular.module( 'scrumlab.dashboard', [
 						d.resolve( projects );
 					});
 					return d.promise;
-				},
-				authenticatedUser: auth.requireAuthenticatedUser
+				}
 			}
 		});
 }])
