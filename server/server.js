@@ -42,7 +42,7 @@ server.listen(config.server.listenPort, 'localhost', 511, function() {
 	console.log('Server started!')
 	// Once the server is listening we automatically open up a browser
 	var open = require('open');
-	// open('http://localhost:' + config.server.listenPort + '/');
+	open('http://localhost:' + config.server.listenPort + '/');
 });
 
 // Authentication
