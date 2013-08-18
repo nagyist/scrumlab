@@ -19,8 +19,14 @@ app.configure(function () {
 	app.use(express.logger({ format: ':method :url' }));
 	app.use(express.bodyParser());
 
-	app.use(express.cookieParser(config.server.secret));
-	app.use(express.session());
+	app.use(express.cookieParser());
+	app.use(express.session({
+		secret:config.server.secret,
+		key: 'sid',
+		cookie: { secure: true, maxAge: 2592000000 },
+		store: new express.session.MemoryStore()
+	}));
+	// http://www.senchalabs.org/connect/session.html
 	app.use(app.router);
 
 	app.use(protectJSON);
@@ -66,7 +72,7 @@ app.post('/api/login', function ( req, res ) {
 app.get(/\/api\/.*/, function ( req, res ) {
 	var token;
 	// console.log(req.url);
-	// console.log(req.method);
+	console.log(req.session);
 	try {
 		token = sessions[req.session.user.id];
 		gitlab.projects.all( token, function ( status, body ) {
