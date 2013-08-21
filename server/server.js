@@ -23,8 +23,7 @@ app.configure(function () {
 	app.use(express.session({
 		secret:config.server.secret,
 		key: 'sid',
-		cookie: { secure: true, maxAge: 2592000000 },
-		store: new express.session.MemoryStore()
+		cookie: { secure: true, maxAge: 2592000000 }
 	}));
 	// http://www.senchalabs.org/connect/session.html
 	app.use(app.router);
@@ -54,12 +53,13 @@ server.listen(config.server.listenPort, 'localhost', 511, function() {
 // Authentication
 // -------------------------
 app.post('/api/login', function ( req, res ) {
+	console.log(req.sessionID);
 	gitlab.login(req.body.email, req.body.password, function ( status, body ) {
 		if( body.username ) {
 			req.session.user = { 'name': body.username, 'id': body.id };
 		}
 		if( body.private_token ) {
-			sessions[body.id] = body.private_token;
+			sessions[req.sessionID] = body.private_token;
 			delete body.private_token;
 		}
 		res.send( status, body );
@@ -71,8 +71,7 @@ app.post('/api/login', function ( req, res ) {
 // -------------------------
 app.get(/\/api\/.*/, function ( req, res ) {
 	var token;
-	// console.log(req.url);
-	console.log(req.session);
+	console.log(req.sessionID);
 	try {
 		token = sessions[req.session.user.id];
 		gitlab.projects.all( token, function ( status, body ) {
