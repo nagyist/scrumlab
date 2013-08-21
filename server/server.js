@@ -19,12 +19,8 @@ app.configure(function () {
 	app.use(express.logger({ format: ':method :url' }));
 	app.use(express.bodyParser());
 
-	app.use(express.cookieParser());
-	app.use(express.session({
-		secret:config.server.secret,
-		key: 'sid',
-		cookie: { secure: true, maxAge: 2592000000 }
-	}));
+	app.use(express.cookieParser(config.server.secret));
+	app.use(express.session());
 	// http://www.senchalabs.org/connect/session.html
 	app.use(app.router);
 
