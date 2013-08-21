@@ -7,7 +7,7 @@ angular.module('auth.retryQueue', [])
 	// Retry a HTTP request.
 	var retry = function ( request ) {
 		// Init server to circumvent circular dependency.
-		$http = $http || injector.get('$http');
+		$http = $http || $injector.get('$http');
 		$http(request.config).then(
 
 			function success( response ) {
