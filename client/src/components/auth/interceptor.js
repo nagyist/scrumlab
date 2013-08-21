@@ -3,7 +3,7 @@ angular.module('auth.interceptor', ['auth.retryQueue'])
 // Service to intercept authentication failures.
 // If an authentiation failure occurs it will store the request in an queue
 // and redirect the user to the login page.
-.factory( 'authInterceptor', [ '$q', '$location', 'authRetryQueue', function ( $q, $location, queue ) {
+.factory( 'authInterceptor', [ '$q', '$location', '$retryQueue', function ( $q, $location, queue ) {
 	return function ( promise ) {
 		// Intercept failed requests.
 		return promise.then( null, function ( response ) {
