@@ -1,5 +1,5 @@
 angular.module('auth.retryQueue', [])
-.factory('$retryQueue', [ '$injector', function ( $injector ) {
+.factory('AuthRetryQueue', [ '$injector', function ( $injector ) {
 	// Store all requests for later execution.
 	var queue = [],
 		$http;
